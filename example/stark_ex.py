@@ -16,13 +16,15 @@ if __name__ == "__main__":
     conf = SparkConf().setAppName("ExampleStarkApp")
     sc = SparkContext(conf=conf)
     school_rdd = sc.parallelize(SCHOOL_DATA, 2)
-    st = stark.Stark(sc, school_rdd, prepare_school_data, stanFile)
+    st = stark.Stark(sc, school_rdd, prepare_school_data)
+    st.setStanModel(file=stanFile)
+
     ## 2 ways to distribute:
     ## + combine each subposterior, weighting according to (co)variances:
-    weighted_avg = st.concensusWeight()
+    weighted_avg = st.concensusWeight(iter=5000)
     ## + naive parallel, like running n*chains:
     dist = st.distribute(n=4)
-    print "Weighted average posterior samples:"
-    print weighted_avg
-    print "Posteriors drawn from parallel workers:"
-    print dist
+    print("Weighted average posterior samples:")
+    print(weighted_avg)
+    print("Posteriors drawn from parallel workers:")
+    print(dist)
