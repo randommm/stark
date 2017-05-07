@@ -3,7 +3,6 @@ import pystan
 import numpy as np
 from pystan import StanModel
 import pickle
-import tempfile
 
 def consensus_avg(J):
     def c(f1, f2):
@@ -37,20 +36,15 @@ class Stark:
 
     def setStanModel(self, **kwargs):
         sm = StanModel(**kwargs)
-        f = tempfile.NamedTemporaryFile(delete=False)
-        self.pickle_filename = f.name
-        f.close()
-        pickle.dump(sm, open(self.pickle_filename, "wb"))
-        self.context.addFile(self.pickle_filename)
+        self.smpickled = pickle.dumps(sm)
 
     def _mcmc(self, callback, **kwargs):
-        pickle_filename = self.pickle_filename
+        smpickled = self.smpickled
         def w(sts):
             ## do MCMC...
             sts = list(sts)
             data = callback(sts)
-            spst = SparkFiles.get(pickle_filename)
-            sm = pickle.load(open(spst, "rb"))
+            sm = pickle.loads(smpickled)
             fit = sm.sampling(data=data, **kwargs)
             h = [np.array(samples[1]) for samples in fit.extract().items()]
             for prm in h:
